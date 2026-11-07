@@ -28,7 +28,14 @@ for (const [name, filename] of [
   }) => {
     const external: string[] = [];
     page.on("request", (request) => {
-      if (!request.url().startsWith("http://127.0.0.1:3106")) external.push(request.url());
+      const url = new URL(request.url());
+      // Installed Chrome loads its built-in PDF viewer from internal browser URLs.
+      if (
+        !request.url().startsWith("http://127.0.0.1:3106") &&
+        url.protocol !== "chrome:" &&
+        url.protocol !== "chrome-extension:"
+      )
+        external.push(request.url());
     });
     await choose(page, name);
     await page.goto("/#/app/profil");

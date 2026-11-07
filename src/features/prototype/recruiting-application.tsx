@@ -4,6 +4,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ApplicationRecord } from "./application-record";
 import { nextStages, stageLabels, type Application } from "./model";
 import { usePrototype } from "./store";
+import { ConversationEntry } from "./project-conversation";
 
 export function RecruitingApplication({ application }: { application: Application }) {
   const { state, run } = usePrototype();
@@ -58,6 +59,7 @@ export function RecruitingApplication({ application }: { application: Applicatio
           )
         }
       >
+        <ConversationEntry application={application} employer />
         {availableStages.length > 0 ? (
           <>
             <h3>

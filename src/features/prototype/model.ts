@@ -2,6 +2,11 @@ import { z } from "zod";
 import marketplace from "./data/marketplace.json" with { type: "json" };
 import people from "./data/people.json" with { type: "json" };
 import type { JobWithCompany } from "@/features/jobs/types";
+import {
+  conversationSchema,
+  updateConversation,
+  type ConversationAction,
+} from "./project-conversation-model";
 
 const id = z
   .string()
@@ -140,6 +145,7 @@ export const stateSchema = z
     applications: z.array(applicationSchema).max(2000),
     saved: z.array(z.object({ candidateId: id, jobId: id })).max(5000),
     drafts: z.array(draftSchema).max(1000),
+    conversations: z.array(conversationSchema).max(2000).default([]),
   })
   .superRefine((s, ctx) => {
     const problem = (message: string) => ctx.addIssue({ code: "custom", message });
@@ -161,6 +167,15 @@ export const stateSchema = z
         problem("Unknown employer company");
     for (const j of s.jobs) if (!companyIds.has(j.companyId)) problem("Unknown job company");
     const keys = new Set<string>();
+    const conversationIds = new Set<string>();
+    for (const conversation of s.conversations) {
+      if (
+        !s.applications.some((application) => application.id === conversation.applicationId) ||
+        conversationIds.has(conversation.applicationId)
+      )
+        problem("Invalid conversation reference");
+      conversationIds.add(conversation.applicationId);
+    }
     for (const a of s.applications) {
       const key = `${a.candidateId}:${a.jobId}`;
       if (
@@ -198,6 +213,7 @@ export type State = z.infer<typeof stateSchema>;
 export type Person = State["people"][number];
 export type Application = State["applications"][number];
 export type Action =
+  | ConversationAction
   | { type: "select_person"; id: string | null }
   | { type: "profile"; value: z.infer<typeof profileSchema> }
   | { type: "toggle_saved"; jobId: string }
@@ -274,7 +290,14 @@ export function transition(
     if (person?.role !== "employer") return fail("Wybierz profil pracodawcy.");
     return person;
   };
-  if (action.type === "select_person") {
+  if (
+    action.type === "conversation_configure" ||
+    action.type === "conversation_answer" ||
+    action.type === "conversation_prepare" ||
+    action.type === "conversation_submit"
+  ) {
+    updateConversation(s, action);
+  } else if (action.type === "select_person") {
     if (action.id !== null && !s.people.some((x) => x.id === action.id))
       fail("Nie znaleziono osoby.");
     s.activePersonId = action.id;
