@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef, useState } from "react";
+import { trackBusinessEvent } from "./analytics";
 import { Button } from "@/components/ui/button";
 import { ApplicationRecord } from "./application-record";
 import type { Application } from "./model";
@@ -46,6 +47,9 @@ export function CandidateApplication({ application }: { application: Application
                   variant="destructive"
                   onClick={() => {
                     if (run({ type: "withdraw", applicationId: application.id })) {
+                      void trackBusinessEvent("application_withdrawn", {
+                        application_id: application.id,
+                      });
                       focusAfter.current = "status";
                       setConfirming(false);
                       setAnnouncement("Aplikacja została wycofana.");

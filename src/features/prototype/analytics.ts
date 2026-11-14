@@ -1,10 +1,44 @@
 import type { PostHog } from "posthog-js";
+import { stages } from "./model";
 
 export const privateAnalyticsSelector =
   '[data-analytics-private], .ph-no-capture, .ph-no-autocapture, [data-ph-no-autocapture], input, textarea, select, form, [contenteditable], [role="textbox"], [role="dialog"], iframe, object, embed, canvas';
 
 let client: Promise<PostHog | undefined> | undefined;
 let lastPageviewPathname: string | undefined;
+
+const businessEventProperties = {
+  application_withdrawn: ["application_id"],
+  candidate_profile_saved: [],
+  application_submitted: ["job_id"],
+  application_draft_saved: ["job_id"],
+  job_published: ["job_id", "is_update"],
+  job_description_generated: ["is_update"],
+  job_search_submitted: ["has_query", "has_location_filter"],
+  job_unsaved: ["job_id"],
+  job_saved: ["job_id"],
+  project_conversation_started: ["application_id", "selected_area_count"],
+  project_conversation_submitted: ["application_id", "question_count"],
+  candidate_stage_updated: ["application_id", "stage"],
+} as const;
+
+function businessProperties(event: string, properties: Record<string, unknown>) {
+  if (!Object.hasOwn(businessEventProperties, event)) return;
+  const keys = businessEventProperties[event as keyof typeof businessEventProperties];
+  return Object.fromEntries(
+    keys.flatMap((key) => {
+      const value = properties[key];
+      const valid = key.endsWith("_id")
+        ? typeof value === "string" && /^[a-zA-Z0-9_-]{1,150}$/.test(value)
+        : key.endsWith("_count")
+          ? typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= 100
+          : key === "stage"
+            ? typeof value === "string" && stages.some((stage) => stage === value)
+            : typeof value === "boolean";
+      return valid ? [[key, value]] : [];
+    }),
+  );
+}
 
 function pageviewPathname(pathname: string) {
   const path = pathname.split(/[?#]/, 1)[0];
@@ -125,7 +159,10 @@ export async function initializeAnalytics() {
             event.properties.$process_person_profile = false;
             return event;
           }
+          const original = event.properties;
+          const business = businessProperties(event.event, original);
           if (
+            business === undefined &&
             ![
               "person_picker_clicked",
               "analytics_test_clicked",
@@ -134,7 +171,6 @@ export async function initializeAnalytics() {
             ].includes(event.event)
           )
             return null;
-          const original = event.properties;
           const pageview = event.event === "$pageview";
           const route = pageviewPathname(String(original.$pathname ?? ""));
           // Retain structural interaction metadata, never DOM text, attributes or scenario data.
@@ -168,9 +204,10 @@ export async function initializeAnalytics() {
                         }))
                       : [],
                   }
-                : event.event === "analytics_test_clicked"
-                  ? { button_label: "Test PostHog", placement: "privacy_page" }
-                  : { button_label: "Wybierz osobę", placement: "public_header" }),
+                : (business ??
+                  (event.event === "analytics_test_clicked"
+                    ? { button_label: "Test PostHog", placement: "privacy_page" }
+                    : { button_label: "Wybierz osobę", placement: "public_header" }))),
           };
           return event;
         },
@@ -191,6 +228,18 @@ export async function trackPageview(pathname: string) {
     lastPageviewPathname = pathname;
   } catch {
     // Optional pageview delivery must not affect routing; a later view can retry.
+    client = undefined;
+  }
+}
+
+export async function trackBusinessEvent(
+  event: keyof typeof businessEventProperties,
+  properties: Record<string, unknown> = {},
+) {
+  try {
+    (await initializeAnalytics())?.capture(event, businessProperties(event, properties));
+  } catch {
+    // Telemetry must never interrupt a successful local operation.
     client = undefined;
   }
 }

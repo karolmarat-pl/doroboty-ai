@@ -18,6 +18,64 @@ afterEach(() => {
 });
 
 describe("optional person-picker analytics", () => {
+  it("routes business events through one client and strips unknown or malformed metadata", async () => {
+    const { trackBusinessEvent } = await import("./analytics");
+    await trackBusinessEvent("job_published", {
+      job_id: "synthetic-job-123",
+      is_update: true,
+      description: "private text",
+    });
+    await trackBusinessEvent("candidate_stage_updated", {
+      application_id: "synthetic-application",
+      stage: "hired",
+      note: "private note",
+    });
+    expect(sdk.init).toHaveBeenCalledTimes(1);
+    expect(sdk.capture.mock.calls).toEqual([
+      ["job_published", { job_id: "synthetic-job-123", is_update: true }],
+      ["candidate_stage_updated", { application_id: "synthetic-application", stage: "hired" }],
+    ]);
+    const filter = sdk.init.mock.calls[0][1].before_send;
+    const result = filter({
+      event: "job_published",
+      properties: {
+        distinct_id: "anonymous",
+        job_id: "synthetic-job-123",
+        is_update: true,
+        description: "private text",
+        $referrer: "private referrer",
+      },
+    });
+    expect(result.properties).toMatchObject({
+      job_id: "synthetic-job-123",
+      is_update: true,
+      token: "phc_test",
+    });
+    expect(result.properties).not.toHaveProperty("description");
+    expect(result.properties).not.toHaveProperty("$referrer");
+    expect(
+      filter({
+        event: "candidate_stage_updated",
+        properties: {
+          application_id: "private free text",
+          stage: "private free text",
+        },
+      }).properties,
+    ).not.toHaveProperty("stage");
+    expect(filter({ event: "unknown_business_event", properties: {} })).toBeNull();
+  });
+
+  it("does not let failed business telemetry block successful scenario actions", async () => {
+    const { trackBusinessEvent } = await import("./analytics");
+    sdk.capture.mockImplementationOnce(() => {
+      throw new Error("unavailable");
+    });
+    await expect(trackBusinessEvent("candidate_profile_saved")).resolves.toBeUndefined();
+    vi.stubGlobal("window", { location: { origin: "http://127.0.0.1:3106" } });
+    await trackBusinessEvent("candidate_profile_saved");
+    expect(sdk.capture).toHaveBeenCalledTimes(1);
+  });
+
   it("records unmasked replay without borrowing autocapture exclusions and preserves snapshots", async () => {
     const { initializeAnalytics } = await import("./analytics");
     await initializeAnalytics();

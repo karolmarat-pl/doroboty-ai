@@ -9,6 +9,14 @@ async function interceptAnalytics(page: Page) {
   // Production bot filtering stays enabled; this isolated test represents a normal browser.
   await page.addInitScript(() => {
     Object.defineProperty(navigator, "webdriver", { get: () => undefined });
+    // Isolate SDK tests from the dev StrictMode Web Lock acquisition race.
+    // Real lock contention and persistence are exercised by the static-build journeys.
+    Object.defineProperty(navigator, "locks", {
+      value: {
+        request: async (name: string, _options: unknown, callback: (lock: unknown) => unknown) =>
+          callback({ name, mode: "exclusive" }),
+      },
+    });
   });
   await page.route(`${origin}/**`, async (route) => {
     const url = new URL(route.request().url());
@@ -128,6 +136,10 @@ test("real recorder keeps synthetic private-screen, dialog and input content whi
   const input = page.getByLabel("Imię i nazwisko");
   await input.fill("SYNTHETIC_REPLAY_INPUT_VISIBLE");
   await page.getByRole("button", { name: "Zapisz profil", exact: true }).click();
+  await expect
+    .poll(() => events.filter((event) => event.event === "candidate_profile_saved").length)
+    .toBe(1);
+  expect(events.some((event) => event.event === "$identify")).toBe(false);
   await expect
     .poll(() => snapshots().includes("SYNTHETIC_REPLAY_INPUT_VISIBLE"), { timeout: 15000 })
     .toBe(true);

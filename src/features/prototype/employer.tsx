@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router";
+import { trackBusinessEvent } from "./analytics";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -133,7 +134,13 @@ export function EmployerJobEditor() {
       );
       return;
     }
-    if (run({ type: "publish", job: parsed.data })) navigate("/app/oferty");
+    if (run({ type: "publish", job: parsed.data })) {
+      void trackBusinessEvent("job_published", {
+        job_id: parsed.data.id,
+        is_update: Boolean(existing),
+      });
+      navigate("/app/oferty");
+    }
   }
   return (
     <>
@@ -167,6 +174,9 @@ export function EmployerJobEditor() {
             variant="outline"
             disabled={source.trim().length < 20 || title.trim().length < 3}
             onClick={() => {
+              void trackBusinessEvent("job_description_generated", {
+                is_update: Boolean(existing),
+              });
               setGenerated(
                 `${title}\n\nO roli\n${source.trim().slice(0, 10000)}\n\nJak pracujemy\nŁączymy potrzeby użytkowników, odpowiedzialne wykorzystanie AI i mierzalne efekty.\n\nProces rekrutacji\nPrześlij aplikację i opowiedz o projekcie, w którym Twoje decyzje wpłynęły na wynik.`,
               );

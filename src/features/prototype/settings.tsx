@@ -133,13 +133,13 @@ export function PrivacyPage() {
         </p>
         {isAnalyticsEnabled() && (
           <p>
-            PostHog w UE mierzy wyświetlenia widoków i interakcje w publicznych częściach strony
-            oraz nagrywa sesje bez maskowania tekstów, atrybutów i pól formularzy. Nagrania mogą
-            zawierać wpisane treści oraz widoczne dane profili, aplikacji, wybór osoby i okna
-            dialogowe. Używaj wyłącznie fikcyjnych danych. Automatyczny pomiar interakcji pomija
-            pola formularzy i treści ekranów konta. Te ograniczenia nie dotyczą nagrań. Pomiar nie
-            korzysta z cookies ani trwałego identyfikatora. Nagranie odtwarza interfejs; nie zawiera
-            dźwięku ani obrazu z kamery.
+            PostHog w UE mierzy wyświetlenia widoków, działania w prototypie i automatyczne
+            interakcje w publicznych częściach strony oraz nagrywa sesje bez maskowania tekstów,
+            atrybutów i pól formularzy. Nagrania mogą zawierać wpisane treści oraz widoczne dane
+            profili, aplikacji, wybór osoby i okna dialogowe. Używaj wyłącznie fikcyjnych danych.
+            Automatyczny pomiar interakcji pomija pola formularzy i treści ekranów konta. Te
+            ograniczenia nie dotyczą nagrań. Pomiar nie korzysta z cookies ani trwałego
+            identyfikatora. Nagranie odtwarza interfejs; nie zawiera dźwięku ani obrazu z kamery.
           </p>
         )}
         <p>

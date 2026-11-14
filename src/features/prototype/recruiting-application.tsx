@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef, useState } from "react";
+import { trackBusinessEvent } from "./analytics";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ApplicationRecord } from "./application-record";
@@ -41,6 +42,10 @@ export function RecruitingApplication({ application }: { application: Applicatio
                     variant={stage === "rejected" ? "outline" : "default"}
                     onClick={() => {
                       if (run({ type: "stage", applicationId: application.id, stage, note })) {
+                        void trackBusinessEvent("candidate_stage_updated", {
+                          application_id: application.id,
+                          stage,
+                        });
                         setNote("");
                         setAnnouncement(`Zapisano etap: ${stageLabels[stage]}.`);
                         pendingFocus.current = true;

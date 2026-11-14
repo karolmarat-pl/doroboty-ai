@@ -36,6 +36,8 @@ PostHog initializes on startup only on the configured production origin. HashRou
 
 Public autocapture still excludes inputs, forms, editable regions, dialogs and private route content, and retains structural metadata only. At the owner's request, replay has no text/input/attribute masking or route/dialog blocking: rendered scenario text and entered synthetic answers can be transmitted to PostHog EU. Use synthetic data only. Console, network body, canvas and cross-origin iframe recording remain disabled. Native embedded PDF playback is not guaranteed by DOM replay. The recorder is bundled locally. Enable session replay in the matching PostHog project. Identity remains in memory without cookies or persistent profiles. The privacy page includes a Test PostHog button that queues analytics_test_clicked; browser blockers can still prevent delivery. Other origins, including localhost and deploy previews, remain offline. These changes affect future recordings only; previously masked text cannot be restored.
 
+The business events previously added on main also use this shared client: job search/save/publication, profile save, application draft/submission/withdrawal, recruiting-stage changes and project-conversation start/completion. Their allowlist accepts only bounded synthetic record IDs, fixed stage names, booleans and counts. It drops free text and unknown properties. Persona selection does not identify a person in PostHog, and failed telemetry does not block scenario operations. The earlier wizard initializer and direct SDK imports have been replaced.
+
 ## Build and verify
 
 ```sh
