@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router";
+import posthog from "posthog-js";
 import { ArrowRight, MessageCircle, Users } from "lucide-react";
 import { BackLink } from "@/components/back-link";
 import { ConfirmDialog } from "@/components/confirm-dialog";
@@ -24,6 +25,10 @@ import {
   type AreaId,
   type QuestionId,
 } from "./project-conversation-model";
+
+const posthogConfigured = Boolean(
+  import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN && import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
+);
 
 export function ConversationEntry({
   application,
@@ -246,6 +251,11 @@ function ConversationWorkspace({
                             selected,
                           })
                         ) {
+                          if (posthogConfigured)
+                            posthog.capture("project_conversation_started", {
+                              application_id: application.id,
+                              selected_area_count: selected.length,
+                            });
                           setStep(0);
                           setMessage(
                             "Zapisano obszary rozmowy. To lokalna symulacja, zaproszenie nie zostało wysłane.",
@@ -352,6 +362,11 @@ function ConversationWorkspace({
                     disabled={!validAnswers}
                     onClick={() => {
                       if (run({ type: "conversation_submit", applicationId: application.id })) {
+                        if (posthogConfigured)
+                          posthog.capture("project_conversation_submitted", {
+                            application_id: application.id,
+                            question_count: questionIds.length,
+                          });
                         setMessage(
                           "Zakończono symulowaną rozmowę. Odpowiedzi są dostępne rekruterowi w tym scenariuszu.",
                         );
