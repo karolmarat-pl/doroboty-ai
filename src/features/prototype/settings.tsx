@@ -6,6 +6,7 @@ import { serializeState, MAX_IMPORT_BYTES } from "./storage";
 import { PageTitle } from "./shell";
 
 import { downloadText } from "./download";
+import { isAnalyticsEnabled, trackAnalyticsTest } from "./analytics";
 export function SettingsPage() {
   const { state, reset, importState, original } = usePrototype();
   const [pending, setPending] = useState<"reset" | "import" | null>(null);
@@ -105,6 +106,18 @@ export function SettingsPage() {
   );
 }
 export function PrivacyPage() {
+  const [testMessage, setTestMessage] = useState("");
+  const [testing, setTesting] = useState(false);
+  async function testAnalytics() {
+    setTesting(true);
+    const queued = await trackAnalyticsTest();
+    setTestMessage(
+      queued
+        ? "Zdarzenie testowe przygotowane do wysłania. Sprawdź analytics_test_clicked w PostHog; blokada w przeglądarce może zatrzymać wysyłkę."
+        : "Pomiar jest niedostępny. Test działa na opublikowanej stronie z włączonym PostHogiem.",
+    );
+    setTesting(false);
+  }
   return (
     <section className="prototype-section max-w-4xl">
       <h1>Prywatność prototypu</h1>
@@ -114,14 +127,33 @@ export function PrivacyPage() {
           ani poufnych informacji.
         </p>
         <p>
-          Profile, aplikacje i ustawienia pozostają w pamięci tej przeglądarki. Aplikacja nie wysyła
-          ich do bazy, dostawcy AI ani systemu analitycznego. Plik eksportu zawiera cały lokalny
-          scenariusz, w tym notatki.
+          Profile, aplikacje i ustawienia zapisują się w tej przeglądarce. Aplikacja nie wysyła ich
+          do bazy aplikacji ani dostawcy AI. Plik eksportu zawiera cały lokalny scenariusz, w tym
+          notatki.
         </p>
+        {isAnalyticsEnabled() && (
+          <p>
+            PostHog w UE mierzy wyświetlenia widoków, działania w prototypie i automatyczne
+            interakcje w publicznych częściach strony oraz nagrywa sesje bez maskowania tekstów,
+            atrybutów i pól formularzy. Nagrania mogą zawierać wpisane treści oraz widoczne dane
+            profili, aplikacji, wybór osoby i okna dialogowe. Używaj wyłącznie fikcyjnych danych.
+            Automatyczny pomiar interakcji pomija pola formularzy i treści ekranów konta. Te
+            ograniczenia nie dotyczą nagrań. Pomiar nie korzysta z cookies ani trwałego
+            identyfikatora. Nagranie odtwarza interfejs; nie zawiera dźwięku ani obrazu z kamery.
+          </p>
+        )}
         <p>
           Możesz usunąć zmiany przyciskiem „Resetuj scenariusz” w ustawieniach lub wyczyścić dane
           witryny w przeglądarce. Hosting może prowadzić własne logi dostępu.
         </p>
+        <section className="prototype-panel prototype-form" aria-labelledby="analytics-test-title">
+          <h2 id="analytics-test-title">Test pomiaru</h2>
+          <p>Kliknij przycisk, a potem sprawdź zdarzenie analytics_test_clicked w PostHog.</p>
+          <Button onClick={() => void testAnalytics()} disabled={testing}>
+            Test PostHog
+          </Button>
+          {testMessage && <p role="status">{testMessage}</p>}
+        </section>
       </div>
     </section>
   );

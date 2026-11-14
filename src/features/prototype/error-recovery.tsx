@@ -1,11 +1,6 @@
 import { Component, createRef, type ReactNode } from "react";
-import posthog from "posthog-js";
 import { Button } from "@/components/ui/button";
 import { downloadText } from "./download";
-
-const posthogConfigured = Boolean(
-  import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN && import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
-);
 
 type Incident = {
   code: "UI_RENDER_FAILURE" | "RUNTIME_FAILURE" | "UNHANDLED_REJECTION";
@@ -22,8 +17,6 @@ export class ErrorRecovery extends Component<
 
   private record = (code: Incident["code"]) => {
     // Never inspect the exception or rejection reason, including for deduplication.
-    if (posthogConfigured)
-      posthog.logger.error("error_recovery_activated", { incident_code: code });
     this.setState((state) =>
       state.incident
         ? null
@@ -70,9 +63,7 @@ export class ErrorRecovery extends Component<
     return { failed: true };
   }
 
-  componentDidCatch(error: Error) {
-    // This is the app-wide React error boundary; PostHog receives the exception before recovery.
-    if (posthogConfigured) posthog.captureException(error);
+  componentDidCatch() {
     // Deliberately never retain the error, stack, route, props or scenario text.
     this.record("UI_RENDER_FAILURE");
   }
