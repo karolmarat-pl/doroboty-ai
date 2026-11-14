@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
-import { initialState, transition, type Action, type State } from "./model";
+import posthog from "posthog-js";
+import { currentPerson, initialState, transition, type Action, type State } from "./model";
 import {
   parseState,
   readState,
@@ -15,6 +16,10 @@ function browserStorage(): StoragePort | null {
     return null;
   }
 }
+const posthogConfigured = Boolean(
+  import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN && import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
+);
+
 function useStore() {
   const [loaded] = useState(() => readState(browserStorage()));
   const [state, setState] = useState(loaded.state);
@@ -25,6 +30,7 @@ function useStore() {
   const snapshot = useRef(loaded.snapshot);
   const writer = useRef(false);
   const conflicted = useRef(false);
+  const identifiedPersonId = useRef<string | null>(null);
   const [writeIssue, setWriteIssue] = useState("");
   function conflict() {
     conflicted.current = true;
@@ -126,6 +132,21 @@ function useStore() {
       return false;
     }
   }
+  useEffect(() => {
+    if (!posthogConfigured) return;
+
+    const person = currentPerson(state);
+    if (!person) {
+      if (identifiedPersonId.current !== null) posthog.reset();
+      identifiedPersonId.current = null;
+      return;
+    }
+    if (identifiedPersonId.current === person.id) return;
+
+    if (identifiedPersonId.current !== null) posthog.reset();
+    posthog.identify(person.id, { name: person.name, role: person.role });
+    identifiedPersonId.current = person.id;
+  }, [state]);
   useEffect(() => {
     document.documentElement.classList.remove("dark");
   }, []);

@@ -1,5 +1,6 @@
 import { Link, useLocation, useParams, useSearchParams } from "react-router";
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import posthog from "posthog-js";
 import { ArrowUpRight, Users, MapPin, BriefcaseBusiness, Bookmark } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Search, ArrowRight, Monitor, X } from "lucide-react";
@@ -26,6 +27,10 @@ import { usePrototype } from "./store";
 import { currentPerson, publishedJobs } from "./model";
 import { NotFound } from "./shell";
 import { cn } from "@/lib/utils";
+
+const posthogConfigured = Boolean(
+  import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN && import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
+);
 
 function LocalMap({ jobs }: { jobs: JobWithCompany[] }) {
   const [selected, setSelected] = useState<string | null>(null);
@@ -146,6 +151,11 @@ export function JobsPage() {
       if (value) next.set(key, value);
       else next.delete(key);
     }
+    if (posthogConfigured)
+      posthog.capture("job_search_submitted", {
+        has_query: Boolean(String(data.get("query") ?? "").trim()),
+        has_location_filter: Boolean(String(data.get("location") ?? "").trim()),
+      });
     setParams(next);
   }
   const locations = [...new Set(all.flatMap((x) => x.locations))];
@@ -430,7 +440,12 @@ export function JobPage() {
                     variant="outline"
                     aria-label="Zapisz ofertę"
                     aria-pressed={saved}
-                    onClick={() => run({ type: "toggle_saved", jobId: job.id })}
+                    onClick={() => {
+                      if (run({ type: "toggle_saved", jobId: job.id })) {
+                        if (posthogConfigured)
+                          posthog.capture(saved ? "job_unsaved" : "job_saved", { job_id: job.id });
+                      }
+                    }}
                   >
                     <Bookmark className={cn(saved && "fill-current")} />
                     Zapisz ofertę
