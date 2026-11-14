@@ -27,4 +27,6 @@ The final complete Chrome run passed all 51 browser journeys in 35.0 seconds. Th
 
 PR #4: https://github.com/karolmarat-pl/doroboty-ai/pull/4. The first integrated head is `de6ea5ca8758d38776ee2b1ee5f362819c56d32b`. Netlify Deploy Preview `6af8a4deae9d7a3ca538bc4e` built this revision successfully. This preview is not the production publication and does not enable analytics on its different origin.
 
+The repository Actions API reports Actions enabled and CI active, but no workflow run appeared after PR creation or a synchronize push. Re-enabling the existing workflow also returned success without creating a run. The CI definition now additionally supports explicit `workflow_dispatch`, preserving its standard PR/main triggers and job steps, so the same gate can be requested directly for the release branch. This is a tooling behavior update; SYS-06 was reviewed and the gate itself is unchanged.
+
 CI, production deployment and smoke evidence will be recorded after execution.
