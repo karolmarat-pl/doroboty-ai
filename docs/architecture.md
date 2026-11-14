@@ -14,7 +14,7 @@ Storage uses one versioned localStorage key. Import validates schema/version, un
 
 src/features/prototype owns model/storage/state and page compositions. src/features/jobs retains reusable presentation/filter/description logic; src/components/ui owns Base UI controls. Keep changes small.
 
-LocalStorage is origin-specific. Reload preserves state; another browser/device/port starts separately. No cross-tab live synchronization is provided; close other tabs before editing/importing. Hash links reference records in the receiving browser, not transferred records.
+LocalStorage is origin-specific. Reload preserves state; another browser/device/port starts separately. An origin-wide Web Lock allows only one tab to persist. Other tabs retain changes in memory for export; import/reset cannot replace that work. Storage events and a pre-write snapshot comparison detect external changes. Export local work, close other tabs and reload before resuming. Browsers without Web Locks remain memory-only. No cross-tab merging is provided. Hash links reference records in the receiving browser, not transferred records.
 
 ## Evidence and distribution
 
