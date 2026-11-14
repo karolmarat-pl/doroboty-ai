@@ -29,4 +29,6 @@ PR #4: https://github.com/karolmarat-pl/doroboty-ai/pull/4. The first integrated
 
 The repository Actions API reports Actions enabled and CI active, but no workflow run appeared after PR creation or a synchronize push. Re-enabling the existing workflow also returned success without creating a run. The CI definition now additionally supports explicit `workflow_dispatch`, preserving its standard PR/main triggers and job steps, so the same gate can be requested directly for the release branch. This is a tooling behavior update; SYS-06 was reviewed and the gate itself is unchanged.
 
+The first explicit CI run reached the browser gate: all non-SDK journeys passed, but CI's headless-shell browser emitted no SDK events despite successfully loading SDK configuration. The analytics-only normal-browser fixture now aligns its client-hint/platform signals with its existing Desktop Chrome user agent; production bot filtering and product configuration remain unchanged. CI will be rerun before merge.
+
 CI, production deployment and smoke evidence will be recorded after execution.

@@ -9,6 +9,8 @@ async function interceptAnalytics(page: Page) {
   // Production bot filtering stays enabled; this isolated test represents a normal browser.
   await page.addInitScript(() => {
     Object.defineProperty(navigator, "webdriver", { get: () => undefined });
+    Object.defineProperty(navigator, "userAgentData", { get: () => undefined });
+    Object.defineProperty(navigator, "platform", { get: () => "Win32" });
     // Isolate SDK tests from the dev StrictMode Web Lock acquisition race.
     // Real lock contention and persistence are exercised by the static-build journeys.
     Object.defineProperty(navigator, "locks", {
