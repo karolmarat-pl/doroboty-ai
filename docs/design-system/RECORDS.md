@@ -16,6 +16,8 @@ Owner: src/components/record-sheet.tsx; styles: src/app/records.css.
 
 Use one outlined surface for related submitted materials, editing and decisions. The sheet includes a visually hidden H2 from its label; the application answer, submitted CV and recruiter note use the existing 26px H3 scale, retaining section spacing and the associated textarea label. Do not wrap each section in another panel. Base UI Tabs owns selection, roving focus, arrows/Home/End and panel relationships; selection follows keyboard focus because all content is local; tabs compose the existing Button via `render`. Base UI owns active-panel mounting; an exiting panel may briefly remain inert during its lifecycle. Select panels by their accessible tab name in tests rather than assuming there is always exactly one panel node. Keep unsaved notes outside panels so switching tabs preserves them. Panels remain keyboard reachable. Long content wraps and retains line breaks; buttons wrap labels at small widths.
 
+Optional controlled tabs: `activeSection?: string` and `onSectionChange?: (value: string) => void`. Supply both to control selection from an external feature navigator. The project conversation map uses this to return to “Objaśnienie” when choosing a project area, retaining focus on the map button. Existing callers remain uncontrolled and start on the first section; the Base UI keyboard and panel contracts are unchanged.
+
 ## CvAttachment
 
 Owner: [cv-attachment.tsx](../../src/features/prototype/cv-attachment.tsx).

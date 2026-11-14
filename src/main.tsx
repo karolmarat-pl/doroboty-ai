@@ -1,9 +1,16 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./features/prototype/app";
+import { ErrorRecovery } from "./features/prototype/error-recovery";
 import "./app/globals.css";
-createRoot(document.getElementById("root")!).render(
+createRoot(document.getElementById("root")!, {
+  onCaughtError: () => {
+    // ErrorRecovery exposes only allowlisted diagnostic metadata, never error text.
+  },
+}).render(
   <StrictMode>
-    <App />
+    <ErrorRecovery>
+      <App />
+    </ErrorRecovery>
   </StrictMode>,
 );

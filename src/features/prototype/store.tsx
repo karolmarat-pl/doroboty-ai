@@ -1,6 +1,13 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { initialState, transition, type Action, type State } from "./model";
-import { parseState, readState, saveState, type StoragePort } from "./storage";
+import {
+  parseState,
+  readState,
+  saveState,
+  serializeState,
+  STORAGE_KEY,
+  type StoragePort,
+} from "./storage";
 function browserStorage(): StoragePort | null {
   try {
     return window.localStorage;
@@ -15,23 +22,92 @@ function useStore() {
   const [error, setError] = useState("");
   const [blocked, setBlocked] = useState(loaded.blocked);
   const latest = useRef(state);
+  const snapshot = useRef(loaded.snapshot);
+  const writer = useRef(false);
+  const conflicted = useRef(false);
+  const [writeIssue, setWriteIssue] = useState("");
+  function conflict() {
+    conflicted.current = true;
+    setWriteIssue(
+      "Inna karta może zapisywać ten scenariusz lub zmieniła zapis. Zmiany w tej karcie pozostają tylko tutaj. Wyeksportuj je, zamknij pozostałe karty prototypu, a następnie odśwież tę kartę, aby wczytać zapisany scenariusz.",
+    );
+  }
+  useEffect(() => {
+    let cancelled = false;
+    let release: (() => void) | undefined;
+    if (!navigator.locks) {
+      setWriteIssue(
+        "Ta przeglądarka nie pozwala zabezpieczyć zapisu między kartami. Zmiany pozostają tylko w tej karcie. Wyeksportuj je przed zamknięciem strony.",
+      );
+      return;
+    }
+    void navigator.locks
+      .request(`${STORAGE_KEY}.writer`, { ifAvailable: true }, async (lock) => {
+        if (cancelled) return;
+        if (!lock) {
+          conflict();
+          return;
+        }
+        writer.current = true;
+        await new Promise<void>((resolve) => {
+          release = resolve;
+        });
+      })
+      .catch(() => {
+        if (!cancelled) conflict();
+      });
+    const changed = (event: StorageEvent) => {
+      if (
+        event.storageArea === browserStorage() &&
+        (event.key === STORAGE_KEY || event.key === null)
+      )
+        conflict();
+    };
+    window.addEventListener("storage", changed);
+    return () => {
+      cancelled = true;
+      writer.current = false;
+      release?.();
+      window.removeEventListener("storage", changed);
+    };
+  }, []);
   function commit(next: State, replace = false) {
+    const storage = browserStorage();
+    let canWrite = writer.current && !conflicted.current;
+    try {
+      if (storage && storage.getItem(STORAGE_KEY) !== snapshot.current) {
+        conflict();
+        canWrite = false;
+      }
+    } catch {
+      canWrite = false;
+      setWriteIssue(
+        "Nie udało się sprawdzić zapisu w przeglądarce. Zmiany pozostają tylko w tej karcie. Wyeksportuj je przed zamknięciem strony.",
+      );
+    }
+    // Import/reset must not discard local work while a different tab owns persistence.
+    if (replace && !canWrite) return false;
     latest.current = next;
     setState(next);
     setError("");
-    if (blocked && !replace) return;
+    if (!canWrite) {
+      if (!writeIssue) conflict();
+      return false;
+    }
+    if (blocked && !replace) return true;
     try {
-      saveState(browserStorage(), next);
+      saveState(storage, next);
+      snapshot.current = serializeState(next);
       setIssue("");
       if (replace) setBlocked(false);
     } catch (e) {
       setIssue((e as Error).message);
     }
+    return true;
   }
   function run(action: Action) {
     try {
-      commit(transition(latest.current, action));
-      return true;
+      return commit(transition(latest.current, action));
     } catch (e) {
       setError(
         e instanceof Error && e.name !== "ZodError"
@@ -44,8 +120,7 @@ function useStore() {
   function importState(raw: string) {
     try {
       const next = parseState(raw);
-      commit(next, true);
-      return true;
+      return commit(next, true);
     } catch (e) {
       setError((e as Error).message);
       return false;
@@ -57,6 +132,7 @@ function useStore() {
   return {
     state,
     issue,
+    writeIssue,
     error,
     blocked,
     original: loaded.original,

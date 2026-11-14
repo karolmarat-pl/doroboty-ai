@@ -17,6 +17,7 @@ import {
 import { EmployerJobs, EmployerJobEditor, CompanyEditor } from "./employer";
 import { SettingsPage, PrivacyPage } from "./settings";
 import { CasePage } from "./case";
+import { ProjectConversationPage } from "./project-conversation";
 function AppRoutes() {
   return (
     <Routes>
@@ -142,6 +143,22 @@ function AppRoutes() {
           }
         />
         <Route path="app/settings" element={<SettingsPage />} />
+        <Route
+          path="app/kandydaci/:id/rozmowa"
+          element={
+            <RequireRole role="employer">
+              <ProjectConversationPage employer />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="app/aplikacje/:id/rozmowa"
+          element={
+            <RequireRole role="candidate">
+              <ProjectConversationPage />
+            </RequireRole>
+          }
+        />
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>

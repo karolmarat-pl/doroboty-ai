@@ -10,17 +10,27 @@ export function RecordSheet({
   attachment,
   children,
   footer,
+  activeSection,
+  onSectionChange,
 }: {
   label: string;
   sections: RecordSection[];
   attachment?: ReactNode;
   children?: ReactNode;
   footer?: ReactNode;
+  activeSection?: string;
+  onSectionChange?: (value: string) => void;
 }) {
   return (
     <section className="record-sheet" aria-label={label}>
       <h2 className="sr-only">{label}</h2>
-      <Tabs.Root defaultValue={sections[0]?.value}>
+      <Tabs.Root
+        defaultValue={sections[0]?.value}
+        value={activeSection}
+        onValueChange={(value) => {
+          if (typeof value === "string") onSectionChange?.(value);
+        }}
+      >
         <Tabs.List className="record-tabs" aria-label={label} activateOnFocus>
           {sections.map((section) => (
             <Tabs.Tab
