@@ -21,7 +21,7 @@ import { usePrototype } from "./store";
 import { cn } from "@/lib/utils";
 import { downloadText } from "./download";
 import { serializeState } from "./storage";
-import { trackPersonPickerClick } from "./analytics";
+import { trackPageview, trackPersonPickerClick } from "./analytics";
 const navigation = [
   { to: "/oferty", label: "Oferty" },
   { to: "/metodologia", label: "Metodologia" },
@@ -78,6 +78,9 @@ export function Shell() {
   const main = useRef<HTMLElement>(null);
   const lastPath = useRef(pathname);
   useEffect(() => {
+    void trackPageview(pathname);
+  }, [pathname]);
+  useEffect(() => {
     if (lastPath.current !== pathname) {
       clearError();
       main.current?.focus();
@@ -119,7 +122,12 @@ export function Shell() {
           {error}
         </p>
       )}
-      <div key={`${state.activePersonId}:${pathname}`}>
+      <div
+        key={`${state.activePersonId}:${pathname}`}
+        data-analytics-private={
+          /^(\/app(?:\/|$)|\/auth(?:\/|$)|\/aplikuj(?:\/|$))/.test(pathname) ? "" : undefined
+        }
+      >
         <Outlet />
       </div>
     </>
@@ -164,7 +172,7 @@ export function Shell() {
               <BrandMark />
               DoRoboty.ai
             </Link>
-            <div className="workspace-label">
+            <div className="workspace-label" data-analytics-private="">
               <span className="workspace-avatar">{person.name[0]}</span>
               <div>
                 <strong>{person.name}</strong>
@@ -209,7 +217,9 @@ export function Shell() {
                     ? "Strefa pracodawcy"
                     : "Case study"}
               </span>
-              <Link to="/auth/sign-in">{person.name}</Link>
+              <Link to="/auth/sign-in" data-analytics-private="">
+                {person.name}
+              </Link>
             </div>
             <main id="main" ref={main} tabIndex={-1} className="main-content outline-none">
               {content}
