@@ -28,6 +28,12 @@ Open http://127.0.0.1:3001. No environment file, account, database or additional
 
 Select Anna or Marek as a candidate, Karolina or Tomasz as an employer, or the instructor. Publish a job, apply, switch person and record the employer decision. Changes survive reload in this browser; settings provide export, import and reset. AI and scores simulate prepared scenarios. Use example CVs only.
 
+## Optional analytics for the owner
+
+Local and participant builds need no configuration and remain offline. To enable the public header click on one deployed HTTPS origin, copy .env.example to .env.local and set VITE_POSTHOG_PROJECT_TOKEN, VITE_POSTHOG_HOST (https://eu.i.posthog.com) and VITE_POSTHOG_ALLOWED_ORIGIN (the exact origin, without a trailing slash). Configure the same names in Netlify build variables for future hosted builds; NEXT_PUBLIC names do not apply to Vite. Rebuild and redeploy after changes. Vite embeds these values in the public bundle: use only a public ingestion token, never a personal API credential.
+
+Only clicking the public header link "Wybierz osobę" sends person_picker_clicked. Nothing is sent on page load. Identity stays in memory for that page visit; there is no tracking cookie, persistent analytics ID, identification, replay, automatic click capture or error capture. Event properties are allowlisted and exclude form/scenario data and raw URLs. Other origins, including localhost and deploy previews, do not initialize PostHog. Browser blocking/network failure can prevent delivery without blocking the app. Check Activity in the matching PostHog EU project after clicking.
+
 ## Build and verify
 
 ```sh

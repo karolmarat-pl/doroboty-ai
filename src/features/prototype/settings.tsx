@@ -6,6 +6,7 @@ import { serializeState, MAX_IMPORT_BYTES } from "./storage";
 import { PageTitle } from "./shell";
 
 import { downloadText } from "./download";
+import { isAnalyticsEnabled } from "./analytics";
 export function SettingsPage() {
   const { state, reset, importState, original } = usePrototype();
   const [pending, setPending] = useState<"reset" | "import" | null>(null);
@@ -118,6 +119,13 @@ export function PrivacyPage() {
           ich do bazy, dostawcy AI ani systemu analitycznego. Plik eksportu zawiera cały lokalny
           scenariusz, w tym notatki.
         </p>
+        {isAnalyticsEnabled() && (
+          <p>
+            Kliknięcie „Wybierz osobę” w nagłówku wysyła anonimowe zdarzenie do PostHog w UE. Pomiar
+            nie korzysta z cookies ani trwałego identyfikatora. Nie przesyła treści formularzy,
+            danych profili ani notatek i nie nagrywa sesji.
+          </p>
+        )}
         <p>
           Możesz usunąć zmiany przyciskiem „Resetuj scenariusz” w ustawieniach lub wyczyścić dane
           witryny w przeglądarce. Hosting może prowadzić własne logi dostępu.

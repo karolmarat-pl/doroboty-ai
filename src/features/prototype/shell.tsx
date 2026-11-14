@@ -21,6 +21,7 @@ import { usePrototype } from "./store";
 import { cn } from "@/lib/utils";
 import { downloadText } from "./download";
 import { serializeState } from "./storage";
+import { trackPersonPickerClick } from "./analytics";
 const navigation = [
   { to: "/oferty", label: "Oferty" },
   { to: "/metodologia", label: "Metodologia" },
@@ -280,6 +281,7 @@ export function Shell() {
                   <>
                     <Link
                       to="/auth/sign-in?audience=candidate"
+                      onClick={() => void trackPersonPickerClick()}
                       className={cn(
                         buttonVariants({ variant: "outline", size: "lg" }),
                         "text-sm font-medium max-sm:min-h-10 max-sm:px-[var(--gui-space-xs)] max-sm:text-sm",

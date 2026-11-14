@@ -1,6 +1,6 @@
 # Architecture
 
-One React/TypeScript application is built by Vite into static files. HashRouter renders routes under /#/; route parameters created in the browser require no hosting rewrites. The running app currently uses local CSS tokens, Timeless font and Base UI primitives. New and changed UI must follow the accepted Poster People [design system](design-system/README.md), adapted into the existing stack; installing its reference did not convert runtime styles. There is no server data/API layer.
+One React/TypeScript application is built by Vite into static files. HashRouter renders routes under /#/; route parameters created in the browser require no hosting rewrites. The running app currently uses local CSS tokens, Timeless font and Base UI primitives. New and changed UI must follow the accepted Poster People [design system](design-system/README.md), adapted into the existing stack; installing its reference did not convert runtime styles. There is no server data/API layer. Optional PostHog EU delivery is isolated in src/features/prototype/analytics.ts: lazy SDK initialization after the public header click, exact configured HTTPS origin, memory-only identity and an outbound event-property allowlist. Default/local/participant builds make no analytics requests.
 
 ## Data flow
 
