@@ -25,4 +25,6 @@ Separate integration review confirmed exactly one SDK initializer, no remaining 
 
 The final complete Chrome run passed all 51 browser journeys in 35.0 seconds. The previously published deployment `6af85a60d53c239d4c802e3b` was retained before release as 36 actual public files with SHA-256 hashes in the session visualization directory, `posthog-production-previous`. The candidate static build is retained separately as `posthog-production-candidate` with the release tool's manifest.
 
-PR, CI, deployment and production smoke evidence will be recorded after execution.
+PR #4: https://github.com/karolmarat-pl/doroboty-ai/pull/4. The first integrated head is `de6ea5ca8758d38776ee2b1ee5f362819c56d32b`. Netlify Deploy Preview `6af8a4deae9d7a3ca538bc4e` built this revision successfully. This preview is not the production publication and does not enable analytics on its different origin.
+
+CI, production deployment and smoke evidence will be recorded after execution.
